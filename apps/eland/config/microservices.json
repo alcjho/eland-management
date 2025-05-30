@@ -1,0 +1,26 @@
+[
+  {
+    "name": "AUTH_SERVICE",
+    "transport": "TCP",
+    "options": { "host": "127.0.0.1", "port": 5001 }
+  },
+  {
+    "name": "LOCATION_SERVICE",
+    "transport": "TCP",
+    "options": { "host": "127.0.0.1", "port": 5002 }
+  },
+  {
+    "name": "PROPERTY_SERVICE",
+    "transport": "TCP",
+    "options": { "host": "127.0.0.1", "port": 5003 }
+  },
+  {
+    "name": "TENANT_SERVICE",
+    "transport": "TCP",
+    "options": { "host": "127.0.0.1", "port": 5004 }
+  },
+  { "name": "BILLING_SERVICE",
+    "transport": "TCP",
+    "options": { "host": "127.0.0.1", "port": 5005 }
+  }
+]

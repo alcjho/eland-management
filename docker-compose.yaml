@@ -1,0 +1,68 @@
+services:
+  rabbitmq_host:
+    image: rabbitmq:3-management
+    ports:
+      - "5672:5672"  # ✅ AMQP (message broker)
+      - "15672:15672"  # ✅ Management UI
+    environment:
+      RABBITMQ_DEFAULT_USER: eland
+      RABBITMQ_DEFAULT_PASS: Passwords01
+    command: ["rabbitmq-server"]
+    networks:
+      - eland-network
+
+  mongo_host:
+    image: mongo:latest
+    container_name: eland-mongodb
+    ports:
+      - "27017:27017"  # ✅ Expose MongoDB port
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: Passwords01  # 🔐 Change this for security
+    command: ["mongod", "--bind_ip_all"]
+  gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - ./.env
+    ports:
+      - "3000:3000"
+    command: ["npm", "run", "start:gateway"]  # ✅ Ensures correct startup
+
+  auth:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - ./.env
+      - ./apps/eland/.env.dev
+    ports:
+      - "5001:5001"
+    depends_on:
+      - gateway
+    environment:
+      MONGODB_URI: mongodb://mongohost:27017/eland_user
+    command: ["npm", "run", "start:auth"]  # ✅ Ensures correct startup
+
+  billing:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - ./apps/eland-billing/.env.dev
+    ports:
+      - "5005:5005"
+    depends_on:
+      - rabbitmq_host
+      - gateway
+    environment:
+      MONGODB_URI: mongodb://mongohost:27017/eland_user
+    command: ["npm", "run", "start:billing"]  # ✅ Ensures correct startup
+
+volumes:
+  mongo-data:
+
+networks:
+  eland-network:
+    driver: bridge

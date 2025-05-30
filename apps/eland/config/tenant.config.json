@@ -1,0 +1,4 @@
+[
+    {"cmd": "tenant.notification", "service": "TENANT_SERVICE", "type": "event"},
+    {"cmd": "add-tenant", "service": "TENANT_SERVICE", "type": "tcp"}
+]

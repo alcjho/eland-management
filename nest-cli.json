@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json.schemastore.org/nest-cli",
+  "collection": "@nestjs/schematics",
+  "sourceRoot": "apps/eland/src",
+  "compilerOptions": {
+    "deleteOutDir": true,
+    "webpack": true,
+    "tsConfigPath": "apps/eland/tsconfig.app.json"
+  },
+  "monorepo": true,
+  "root": "apps/eland",
+  "projects": {
+    "eland": {
+      "type": "application",
+      "root": "apps/eland",
+      "entryFile": "main",
+      "sourceRoot": "apps/eland/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/eland/tsconfig.app.json"
+      }
+    },
+    "eland-auth": {
+      "type": "application",
+      "root": "apps/eland-auth",
+      "entryFile": "main",
+      "sourceRoot": "apps/eland-auth/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/eland-auth/tsconfig.app.json"
+      }
+    },
+    "eland-library": {
+      "type": "library",
+      "root": "libs/eland-library",
+      "entryFile": "index",
+      "sourceRoot": "libs/eland-library/src",
+      "compilerOptions": {
+        "tsConfigPath": "libs/eland-library/tsconfig.lib.json"
+      }
+    },
+    "eland-property": {
+      "type": "application",
+      "root": "apps/eland-property",
+      "entryFile": "main",
+      "sourceRoot": "apps/eland-property/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/eland-property/tsconfig.app.json"
+      }
+    },
+    "eland-location": {
+      "type": "application",
+      "root": "apps/eland-location",
+      "entryFile": "main",
+      "sourceRoot": "apps/eland-location/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/eland-location/tsconfig.app.json"
+      }
+    },
+    "eland-billing": {
+      "type": "application",
+      "root": "apps/eland-billing",
+      "entryFile": "main",
+      "sourceRoot": "apps/eland-billing/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/eland-billing/tsconfig.app.json"
+      }
+    },
+    "eland-tenant": {
+      "type": "application",
+      "root": "apps/eland-tenant",
+      "entryFile": "main",
+      "sourceRoot": "apps/eland-tenant/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/eland-tenant/tsconfig.app.json"
+      }
+    }
+  }
+}

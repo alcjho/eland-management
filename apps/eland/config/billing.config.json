@@ -1,0 +1,3 @@
+[
+    { "cmd": "process-payment", "service": "BILLING_SERVICE", "type": "tcp" }
+]
