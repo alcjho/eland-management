@@ -1,8 +1,8 @@
  [
-    {"cmd": "login", "service": "AUTH_SERVICE", "type": "tcp"},
-    {"cmd": "register", "service": "AUTH_SERVICE", "type": "tcp"},
-    {"cmd": "add-city", "service": "LOCATION_SERVICE", "type": "tcp"},
-    {"cmd": "get-location", "service": "LOCATION_SERVICE", "type": "tcp"},
-    {"cmd": "add-location", "service": "LOCATION_SERVICE", "type": "tcp"},
-    {"cmd": "update-location", "service": "LOCATION_SERVICE", "type": "tcp"}
+    {"cmd": "user.login", "path": "user/login/:test/:test2/:test3", "service": "AUTH_SERVICE", "type": "tcp", "method": "POST"},
+    {"cmd": "user.token.refresh.create", "path": "user/token/refresh", "service": "AUTH_SERVICE", "type": "tcp", "method": "POST"},
+    {"cmd": "user.account.create", "path": "user/account", "service": "AUTH_SERVICE", "type": "tcp", "method": "POST"},
+    {"cmd": "user.account.activate", "path": "user/account/activate", "service": "AUTH_SERVICE", "type": "tcp", "method": "POST"},
+    {"cmd": "user.account.update", "path": "user/account", "service": "AUTH_SERVICE", "type": "tcp", "method": "PUT"},
+    {"cmd": "user.password.update", "path": "user/password", "service": "AUTH_SERVICE", "type": "tcp", "method": "PUT"}
 ]

@@ -19,7 +19,7 @@ export class ElandMailService {
   }
 
   async sendActivationEmail(email: string, token: string): Promise<void> {
-    const activationUrl = `${this.configService.get<string>('FRONTEND_URL')}/auth/activate-account?token=${token}`;
+    const activationUrl = `${this.configService.get<string>('FRONTEND_URL')}/v1/auth/activate?token=${token}`;
 
     try{
       const res = await this.transporter.sendMail({
@@ -37,6 +37,34 @@ export class ElandMailService {
             <p>${activationUrl}</p>
             <p>This link will expire in 24 hours.</p>
             <p>If you didn't register for an account, please ignore this email.</p>
+          </div>
+        `,
+      });
+    }catch(error){
+      console.error(error);
+    }
+
+  }
+
+  async inviteCoOwner(email: string, token: string): Promise<void> {
+    const activationUrl = `${this.configService.get<string>('FRONTEND_URL')}/auth/affiliate?token=${token}`;
+
+    try{
+      const res = await this.transporter.sendMail({
+        from: this.configService.get<string>('MAIL_FROM'),
+        to: email,
+        subject: 'Your owner invited you to register as a co-owner',
+        html: `
+          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2>Welcome to Our Platform!</h2>
+            <p>Thank you for registering. Please click the button below to register your account:</p>
+            <a href="${activationUrl}" style="display: inline-block; background-color: #4CAF50; color: white; padding: 10px 20px; text-decoration: none; border-radius: 4px; margin: 20px 0;">
+              Activate Account
+            </a>
+            <p>If the button doesn't work, please copy and paste the following link into your browser:</p>
+            <p>${activationUrl}</p>
+            <p>This link may expire soon.</p>
+            <p>If you didn't ask your owner for an account, please ignore this email.</p>
           </div>
         `,
       });

@@ -1,272 +1,187 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Post, Put, Delete, Logger, Param, Body, Query, Request, BadRequestException, UseGuards, ValidationPipe } from '@nestjs/common';
 import { ElandPropertyService } from './eland-property.service';
-import { MessagePattern, Payload, RpcException } from '@nestjs/microservices';
-import { catchError, delay, from, map, Observable, of, throwError } from 'rxjs';
+import { ParkingService } from './services/parking/parking.service';
+import { LodgeService } from './services/lodge/lodge.service';
+import { Action } from './ability.factory';
+import { CheckAbilities } from './decorators/check-abilities.decorator';
+import { Property } from './entities/property.entity';
+import { AbilitiesGuard } from './guards/abilities.guard';
+import { JwtAuthGuard } from './guards/jwt.guard';
 
-@Controller()
+@Controller({
+  path: '/',
+  version: '2',
+})
+@UseGuards(JwtAuthGuard, AbilitiesGuard)
 export class ElandPropertyController {
-  constructor(private readonly elandPropertyService: ElandPropertyService) {}
+  constructor(
+    private readonly elandPropertyService: ElandPropertyService,
+    private readonly parkingService: ParkingService,
+    private readonly lodgeService: LodgeService,
+    private readonly logger: Logger,
+  ) {}
 
-  @MessagePattern({ cmd: "add-property" })
-  addProperty(@Payload() data: any): Observable<any>{
-      return from(this.elandPropertyService.addNewProperty(data.body));
+  // ============ PROPERTY ENDPOINTS ============
+
+  @Post('property')
+  @CheckAbilities({ action: Action.Create, subject: Property })
+  async addProperty(@Body(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true })) data: any) {
+    return this.elandPropertyService.addNewProperty(data);
   }
 
-  @MessagePattern({ cmd: "update-property" })
-  updateProperty(@Payload() data: any): Observable<any> {
-    try {
-      const { params } = data.body;
-      delete data.body.params;
-      delete data.body.query;
-
-      const id = params?.path?.[1]; 
-      if (!id) {
-        return throwError(() => ({
-          status: 400,
-          message: "Invalid property ID",
-        }));
-      }
-
-      return from(this.elandPropertyService.updateProperty(id, data.body)).pipe(
-        catchError((error) =>
-          of({
-            status: 400,
-            message: "Property update failed",
-            error: error.message,
-          })
-        )
-      );
-    } catch (error) {
-      return of({
-        status: 500,
-        message: "Internal server error",
-        error: error.message,
-      });
+  @Put('property/:id')
+  @CheckAbilities({ action: Action.Update, subject: Property })
+  async updateProperty(@Param('id') id: string, @Body() data: any) {
+    if (!id) {
+      throw new BadRequestException('Property ID is required');
     }
+    return this.elandPropertyService.updateProperty(id, data);
   }
 
-  @MessagePattern({ cmd: "remove-property"})
-  removeProperty(@Payload() data: any): Observable<any>{
-    const { params } = data.body;
-    const propertyId = params.path[1];
-    return from(this.elandPropertyService.removeProperty(propertyId));
+  @Delete('property/:id')
+  @CheckAbilities({ action: Action.Delete, subject: Property })
+  async removeProperty(@Param('id') propertyId: string) {
+    if (!propertyId) {
+      throw new BadRequestException('Property ID is required');
+    }
+    return this.elandPropertyService.removeProperty(propertyId);
   }
 
-  @MessagePattern({ cmd: "properties" })
-  listProperties(@Payload() data: any): Observable<any>{
-      const { params } = data.body;
-      delete data.body.params;
-      delete data.body.query;
-      const ownerId = params.path[1];
-      return from(this.elandPropertyService.listMyProperties(ownerId, data.body));
+  @Get('properties')
+  @CheckAbilities({ action: Action.Read, subject: Property })
+  async listProperties(@Request() req: any) {
+    const userId = req.user?.ownerId;
+    return this.elandPropertyService.listMyProperties(userId);
   }
 
-  @MessagePattern({ cmd: "property" })
-  getProperty(@Payload() data: any): Observable<any>{
-      const { params } = data.body;
-      const _id = params.path[1];
-      return from(this.elandPropertyService.getProperty(_id));
+  @Get('property/recent/:limit')
+  @CheckAbilities({ action: Action.Read, subject: Property })
+  async getRecentProperties(@Request() req: any, @Param('limit') limit?: number) {
+    const userId = req.user?.ownerId;
+    return this.elandPropertyService.getMostRecentProperties(userId, limit);
   }
 
-  @MessagePattern({ cmd: "attach-property-location" })
-  attachLocation(@Payload() data: any): Observable<any>{
-      const { params } = data.body;
-      const propertyId = params.path[1];
-      const locationId = params.path[2];
-      return from(this.elandPropertyService.attachLocationToProperty(propertyId, locationId));
+  @Put('property/:propertyId/:locationId')
+  async attachLocationToProperty(
+    @Param('propertyId') propertyId: string,
+    @Param('locationId') locationId: string
+  ) {
+    if (!propertyId || !locationId) {
+      throw new BadRequestException('Property ID and Location ID are required');
+    }
+    return this.elandPropertyService.attachLocationToProperty(propertyId, locationId);
   }
 
-  @MessagePattern({ cmd: "attach-property-lodge" })
-  attachPropertyLodge(@Payload() data: any): Observable<any>{
-      const { params } = data.body;
-      const propertyId = params.path[1];
-      return from(this.elandPropertyService.addNewLodge(propertyId, data.body));
+  @Get('property/:id')
+  async getProperty(@Param('id') propertyId: string) {
+    if (!propertyId) {
+      throw new BadRequestException('Property ID is required');
+    }
+    return this.elandPropertyService.getProperty(propertyId);
   }
 
-  @MessagePattern({ cmd: "remove-property-lodge" })
-  removePropertyFromLodge(@Payload() data: any): Observable<any>{
-      const { params } = data.body;
-      const propertyId = params.path[1];
-      const lodgeId = params.path[2];
-      return from(this.elandPropertyService.removeLodge(propertyId, lodgeId));
+
+  // ============ LODGE ENDPOINTS ============
+  @Post('property/lodges')
+  async addPropertyLodge(@Query('propertyId') propertyId: string, @Body() data: any) {
+    return this.lodgeService.addNewLodge({ ...data, propertyId });
   }
 
-  @MessagePattern({ cmd: "update-property-lodge" })
-  updatePropertyLodge(@Payload() data: any): Observable<any>{
-      const { params } = data.body;
-      const lodgeId = params.path[1];
-      return from(this.elandPropertyService.updateLodge(lodgeId, data.body));
+  // ============ PARKING ENDPOINTS ============
+  @Post('property/parkings')
+  async addParking(
+    @Query('propertyId') propertyId: string,
+    @Query('lodgeId') lodgeId: string,
+    @Body() data: any) {
+    return this.parkingService.addNewParking({ ...data, propertyId, lodgeId });
   }
 
-  @MessagePattern({ cmd: "attach-property-parking" })
-  attachPropertyParking(@Payload() data: any): Observable<any>{
-      const { params } = data.body;
-      const propertyId = params.path[1];
-      return from(this.elandPropertyService.addNewParking(propertyId, data.body));
+  @Put('property/:propertyId/lodge/:lodgeId')
+  async updateLodgeProperty(
+    @Param('propertyId') propertyId: string,
+    @Param('lodgeId') lodgeId: string,
+    @Body() data: any
+  ) {
+    return this.lodgeService.updateLodge(lodgeId, data);
   }
 
-  @MessagePattern({ cmd: "remove-property-parking" })
-  removePropertyParking(@Payload() data: any): Observable<any>{
-      const { params } = data.body;
-      const propertyId = params.path[1];
-      const parkingId = params.path[2];
-      return from(this.elandPropertyService.removeParking(propertyId, parkingId));
+  @Delete('property:propertyId/lodge/:lodgeId')
+  async removeLodgeProperty(
+    @Param('propertyId') propertyId: string,
+    @Param('lodgeId') lodgeId: string
+  ) {
+    if (!lodgeId) {
+      throw new BadRequestException('Lodge ID is required');
+    }
+    return this.lodgeService.removeLodge(lodgeId);
   }
 
-  @MessagePattern({ cmd: "update-property-parking" })
-  updatePropertyParking(@Payload() data: any): Observable<any>{
-      const { params } = data.body;
-      const parkingId = params.path[1];
-      return from(this.elandPropertyService.updateParking(parkingId, data.body));
+  @Get('property:propertyId/lodge/:lodgeId')
+  async getLodge(
+    @Param('propertyId') propertyId: string,
+    @Param('lodgeId') lodgeId: string
+  ) {
+    if (!lodgeId) {
+      throw new BadRequestException('Lodge ID is required');
+    }
+    return this.lodgeService.findLodgeById(lodgeId);
   }
 
-  @MessagePattern({ cmd: "attach-property-amenity" })
-  attachPropertyAmenity(@Payload() data: any): Observable<any>{
-      const { params } = data.body;
-      const propertyId = params.path[1];
-      return from(this.elandPropertyService.addNewAmenity(propertyId, data.body));
+  @Get('property/:propertyId/lodges')
+  async getPropertyLodges(@Param('propertyId') propertyId: string) {
+    if (!propertyId) {
+      throw new BadRequestException('Property ID is required');
+    }
+    return this.lodgeService.findAllLodges(propertyId);
   }
 
-  @MessagePattern({ cmd: "remove-property-amenity" })
-  removePropertyAmenity(@Payload() data: any): Observable<any>{
-      const { params } = data.body;
-      const propertyId = params.path[1];
-      const amenityId = params.path[2];
-      return from(this.elandPropertyService.removeAmenity(propertyId, amenityId));
+  @Put('property/:propertyId/parking/:parkingId')
+  async updatePropertyParking(
+    @Param('propertyId') propertyId: string,
+    @Param('parkingId') parkingId: string,
+    @Body() data: any
+  ) {
+    return this.parkingService.updateParking(parkingId, data);
   }
 
-  @MessagePattern({ cmd: "update-property-amenity" })
-  updatePropertyAmenity(@Payload() data: any): Observable<any>{
-      const { params } = data.body;
-      const amenityId = params.path[1];
-      return from(this.elandPropertyService.updateAmenity(amenityId, data.body));
+  @Delete(':propertyId/parking/:parkingId')
+  async removePropertyParking(
+    @Param('propertyId') propertyId: string,
+    @Param('parkingId') parkingId: string
+  ) {
+    if (!parkingId) {
+      throw new BadRequestException('Parking ID is required');
+    }
+    return this.parkingService.removeParking(parkingId);
   }
 
-  @MessagePattern({ cmd: "attach-property-possession" })
-  attachPropertyPossession(@Payload() data: any): Observable<any>{
-      const { params } = data.body;
-      const propertyId = params.path[1];
-      return from(this.elandPropertyService.addNewPossession(propertyId, data.body));
+  @Get('property/:propertyId/parking/:parkingId')
+  async getParking(
+    @Param('propertyId') propertyId: string,
+    @Param('parkingId') parkingId: string
+  ) {
+    if (!parkingId) {
+      throw new BadRequestException('Parking ID is required');
+    }
+    return this.parkingService.findParking(parkingId);
   }
 
-  @MessagePattern({ cmd: "remove-property-possession" })
-  removePropertyPossession(@Payload() data: any): Observable<any>{
-      const { params } = data.body;
-      const propertyId = params.path[1];
-      const possessionId = params.path[2]
-      return from(this.elandPropertyService.removePossession(propertyId, possessionId));
+  @Get('property/:propertyId/parkings')
+  async getAllParking(@Param('propertyId') propertyId: string) {
+    if (!propertyId) {
+      throw new BadRequestException('Property ID is required');
+    }
+    return this.parkingService.findAllParkings(propertyId);
   }
 
-  @MessagePattern({ cmd: "update-property-possession" })
-  updatePropertyPossession(@Payload() data: any): Observable<any>{
-      const { params } = data.body;
-      const possessionId = params.path[1];
-      return from(this.elandPropertyService.updatePossession(possessionId, data.body));
-  }
-
-  @MessagePattern({ cmd: "attach-lodge-room" })
-  attachLodgeRoom(@Payload() data: any): Observable<any>{
-      const { params } = data.body;
-      const lodgeId = params.path[1];
-      return from(this.elandPropertyService.addNewRoom(lodgeId, data.body));
-  }
-
-  @MessagePattern({ cmd: "remove-lodge-room" })
-  removeLodgeRoom(@Payload() data: any): Observable<any>{
-      const { params } = data.body;
-      const lodgeId = params.path[1]
-      const roomId = params.path[2];
-      return from(this.elandPropertyService.removeRoom(lodgeId, roomId));
-  }
-
-  @MessagePattern({ cmd: "update-lodge-room" })
-  updateLodgeRoom(@Payload() data: any): Observable<any>{
-      const { params } = data.body;
-      const roomId = params.path[1]
-      return from(this.elandPropertyService.updateRoom(roomId, data.body));
-  }
-
-  @MessagePattern({ cmd: "assign-lodge-parking" })
-  assignLodgeParking(@Payload() data: any): Observable<any>{
-      const { params } = data.body;
-      const lodgeId = params.path[1]
-      const parkingId = params.path[2];
-      return from(this.elandPropertyService.assignParkingToLodge(lodgeId, parkingId));
-  }
-
-  @MessagePattern({ cmd: "unassign-lodge-parking" })
-  unassignLodgeParking(@Payload() data: any): Observable<any>{
-      const { params } = data.body;
-      const lodgeId = params.path[1]
-      const parkingId = params.path[2];
-      return from(this.elandPropertyService.unassignParkingFromLodge(lodgeId, parkingId));
-  }
-
-  @MessagePattern({ cmd: "assign-lodge-possession" })
-  assignLodgePossession(@Payload() data: any): Observable<any>{
-      const { params } = data.body;
-      const lodgeId = params.path[1]
-      const possessionId = params.path[2];
-      return from(this.elandPropertyService.assignPossessionToLodge(lodgeId, possessionId));
-  }
-
-  @MessagePattern({ cmd: "unassign-lodge-possession" })
-  unassignLodgePossession(@Payload() data: any): Observable<any>{
-      const { params } = data.body;
-      const lodgeId = params.path[1]
-      const possessionId = params.path[2];
-      return from(this.elandPropertyService.unassignPossessionFromLodge(lodgeId, possessionId));
-  }
-
-  @MessagePattern({ cmd: "assign-lodge-amenity" })
-  assignLodgeAmenity(@Payload() data: any): Observable<any>{
-      const { params } = data.body;
-      const lodgeId = params.path[1]
-      const amenityId = params.path[2];
-      return from(this.elandPropertyService.assignAmenityToLodge(lodgeId, amenityId, data.body));
-  }
-
-  @MessagePattern({ cmd: "unassign-lodge-amenity" })
-  unassignLodgeAmenity(@Payload() data: any): Observable<any>{
-      const { params } = data.body;
-      const lodgeId = params.path[1]
-      const amenityId = params.path[2];
-      return from(this.elandPropertyService.unassignAmenityFromLodge(lodgeId, amenityId));
-  }
-
-  @MessagePattern({ cmd: "list-lodges" })
-  getLodges(@Payload() data: any): Observable<any>{
-      const { params } = data.body;
-      delete data.body.params;
-      delete data.body.query;
-      const propertyId = params.path[1];
-      return from(this.elandPropertyService.listLodges(propertyId));
-  }
-
-  @MessagePattern({ cmd: "list-parkings" })
-  getParkings(@Payload() data: any): Observable<any>{
-      const { params } = data.body;
-      delete data.body.params;
-      delete data.body.query;
-      const propertyId = params.path[1];
-      return from(this.elandPropertyService.listParkings(propertyId));
-  }
-
-  @MessagePattern({ cmd: "list-possessions" })
-  getPossessions(@Payload() data: any): Observable<any>{
-      const { params } = data.body;
-      delete data.body.params;
-      delete data.body.query;
-      const propertyId = params.path[1];
-      return from(this.elandPropertyService.listPossessions(propertyId));
-  }
-
-  @MessagePattern({ cmd: "list-amenities" })
-  getAmenities(@Payload() data: any): Observable<any>{
-      const { params } = data.body;
-      delete data.body.params;
-      delete data.body.query;
-      const propertyId = params.path[1];
-      return from(this.elandPropertyService.listAmenities(propertyId));
+  @Get('property/:propertyId/lodge/:lodgeId/parkings')
+  async getLodgeParking(
+    @Param('propertyId') propertyId: string,
+    @Param('lodgeId') lodgeId: string
+  ) {
+    if (!lodgeId) {
+      throw new BadRequestException('Lodge ID is required');
+    }
+    return this.parkingService.findLodgeParkings(lodgeId);
   }
 }

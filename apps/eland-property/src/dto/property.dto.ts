@@ -1,12 +1,17 @@
-import { IsString, IsEmail, IsNotEmpty, MinLength, IsOptional, ValidateNested } from 'class-validator';
+import { IsString, IsEmail, IsNotEmpty, MinLength, IsOptional, ValidateNested, IsUUID } from 'class-validator';
 
 export class PropertyDto {
-  @IsString()
-  @IsNotEmpty()
-  ownerId: string;
+  @IsUUID()
+  @IsOptional()
+  id?: string;
 
   @IsString()
-  @IsOptional()
+  @IsNotEmpty()
+  userId: string;
+
+  @IsUUID()
+  @IsNotEmpty()
+  // optional location reference; empty string will be rejected by IsUUID
   locationId: string;
   
   @IsString()
@@ -26,8 +31,24 @@ export class PropertyDto {
   status: string;
 
   @IsString()
+  @IsOptional()
+  coverImageId?: string;
+
+  @IsString()
+  @IsOptional()
+  image?: string;
+
+  @IsString()
   @IsNotEmpty()
   totalUnits: number;
+
+  @IsString()
+  @IsNotEmpty()
+  leaseLabel: string
+
+  @IsString()
+  @IsNotEmpty()
+  isMainAsset: boolean
 
   @IsString()
   @IsNotEmpty()

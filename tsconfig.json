@@ -23,6 +23,27 @@
       ],
       "@eland/eland-library/*": [
         "libs/eland-library/src/*"
+      ],
+      "@eland-location/services": [
+        "apps/eland-property/src/apps/eland-location"
+      ],
+      "@eland-location/dto": [
+        "apps/eland-property/src/apps/eland-location/dto"
+      ],
+      "@eland-location/entities": [
+        "apps/eland-property/src/apps/eland-location/entities"
+      ],
+      "@eland-auth/services": [
+        "apps/eland-property/src/apps/eland-auth"
+      ],
+      "@eland-auth/entities": [
+        "apps/eland-property/src/apps/eland-auth/entities"
+      ],
+      "@eland-property/entities": [
+        "apps/eland-property/src/entities"
+      ],
+      "@eland-property/dto": [
+        "apps/eland-property/src/dto"
       ]
     }
   }

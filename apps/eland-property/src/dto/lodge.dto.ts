@@ -1,6 +1,11 @@
-import { IsString, IsEmail, IsNotEmpty, MinLength, IsOptional, ValidateNested } from 'class-validator';
+import { IsString, IsNotEmpty, IsOptional, IsNumber, IsEnum } from 'class-validator';
+import { LeaseType } from '../entities/lodge.entity';
 
 export class LodgeDto {
+  @IsString()
+  @IsNotEmpty()
+  userId: string;
+  
   @IsString()
   @IsNotEmpty()
   propertyId: string;
@@ -19,21 +24,17 @@ export class LodgeDto {
 
   @IsString()
   @IsNotEmpty()
-  lodge_number: string;
-
-  @IsString()
-  @IsNotEmpty()
-  Floor_number: string;
+  lodgeNumber: string;
 
   @IsString()
   @IsOptional()
   description?: string;
 
-  @IsString()
+  @IsEnum(LeaseType)
   @IsNotEmpty()
-  leaseType: string;
+  leaseType: LeaseType;
 
-  @IsString()
+  @IsNumber()
   @IsOptional()
-  price: Number
+  price?: number;
 }

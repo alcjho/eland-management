@@ -22,5 +22,12 @@
   { "name": "BILLING_SERVICE",
     "transport": "TCP",
     "options": { "host": "127.0.0.1", "port": 5005 }
+  },
+  {
+    "name": "FILE_STREAM_SERVICE",
+    "transport": "HTTP",
+    "options": {
+      "baseURL": "http://localhost:3001/files"
+    }
   }
 ]

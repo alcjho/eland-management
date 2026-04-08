@@ -72,6 +72,15 @@
       "compilerOptions": {
         "tsConfigPath": "apps/eland-tenant/tsconfig.app.json"
       }
+    },
+    "eland-files": {
+      "type": "application",
+      "root": "apps/eland-files",
+      "entryFile": "main",
+      "sourceRoot": "apps/eland-files/src",
+      "compilerOptions": {
+        "tsConfigPath": "apps/eland-files/tsconfig.app.json"
+      }
     }
   }
 }

@@ -3,7 +3,11 @@ import { IsString, IsEmail, IsNotEmpty, IsOptional, MinLength } from 'class-vali
 export class UserDto {
   @IsOptional()
   @IsString()
-  _id?: string; // MongoDB ObjectId (optional)
+  id?: string; // MongoDB ObjectId (optional)
+
+  @IsOptional()
+  @IsString()
+  locationId?: string; // Optional location ID for user association
 
   @IsEmail()
   @IsNotEmpty()
@@ -25,4 +29,6 @@ export class UserDto {
   @IsString()
   @IsOptional()
   role?: string; // Example: 'admin', 'user'
+
+  permissions?: string[]
 }

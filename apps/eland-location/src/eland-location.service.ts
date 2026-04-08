@@ -7,7 +7,7 @@ import { Country } from "./schemas/country.schema";
 import { LocationDto } from "./dtos/location.dto";
 import { CityDto } from "./dtos/city.dto";
 import { RpcException } from "@nestjs/microservices";
-import { LocationDocument, PropertyType } from "./schemas/location.schema";
+import { LocationDocument } from "./schemas/location.schema";
 
 @Injectable()
 export class ElandLocationService {
@@ -27,11 +27,10 @@ export class ElandLocationService {
   async createLocation(data: LocationDto, lang?:string) {
     const nameField = lang === 'fr' ? 'name.fr' : 'name.en';
     const formattedPostalCode = data.zipcode?.replace(/\s+/g, '');
-    const { property_type, street_no, apt_no, unit_no, suite_no, zipcode } = data;
     
-    if(data.property_type == 'residential' && !data.apt_no){
-      throw new RpcException("A residential property requires an apartment number")
-    }
+    // if(data.property_type == 'residential' && !data.apt_no){
+    //   throw new RpcException("A residential property requires an apartment number")
+    // }
 
     // validate that a commercial location already exists
     const existingCommerce = await this.getCommerceLocation(data);
@@ -83,6 +82,34 @@ export class ElandLocationService {
     const result = await newLocation.save();
     // retrieve whole city, province and country objects
     return result.populate(['city', 'province', 'country']);
+  }
+
+  async getLocation(locationId: string){
+    
+    const existingLocation =  await this.locationModel.findById(locationId);
+
+    // if so return the same location to the client
+    if(!existingLocation){
+      return;
+    }
+
+    return existingLocation.populate(['city', 'province', 'country']);
+  }
+
+  async getLocationBatch(locationIds: string[], offset: number = 0, limit: number = 100) {
+    console.log('locationIds', locationIds)
+    // Convert string IDs to ObjectId (as previously discussed)
+    const objectIds = locationIds.map(id => new this.locationModel.base.Types.ObjectId(id));
+
+    const locationBatch = await this.locationModel.find({
+        _id: { $in: objectIds }
+    })
+    .populate(['city', 'province', 'country'])
+    .skip(offset)
+    .limit(limit)
+    .exec();
+
+    return { status: 201, data: locationBatch };
   }
 
   async getCommerceLocation(data: LocationDto){
@@ -202,5 +229,70 @@ export class ElandLocationService {
     })
     const result = newCity.save();
     return result;
+  }
+
+  /**
+   * @param lang 
+   * @returns 
+   */
+  async findAllCities(lang?:string) {
+    const language = lang? lang: 'en';
+
+    const projection = {
+      _id: 1, // Always include the ID
+      name: `$name.${language}` // Project the localized name field as 'name'
+    };
+
+    const query = {
+      [`name.${language}`]: { $exists: true }
+    };
+
+    // Ensure city exists
+    const result = await this.cityModel.find(query).select(projection).exec();
+    return result
+  }
+
+  /**
+   * @param lang 
+   * @returns 
+   */
+  async findAllProvinces(lang?:string) {
+    const language = lang? lang: 'en';
+
+    const projection = {
+      _id: 1, // Always include the ID
+      name: `$name.${language}`, // Project the localized name field as 'name'
+      code: `$code`
+    };
+
+    const query = {
+      [`name.${language}`]: { $exists: true }
+    };
+
+    // Ensure city exists
+    const result = await this.provinceModel.find(query).select(projection).exec();
+    return result
+  }
+
+  /**
+   * @param lang
+   * @returns 
+   */
+  async findAllCountries(lang?:string) {
+    const language = lang? lang: 'en';
+
+    const projection = {
+      _id: 1, // Always include the ID
+      name: `$name.${language}`, // Project the localized name field as 'name'
+      code: `$code`
+    };
+
+    const query = {
+      [`name.${language}`]: { $exists: true }
+    };
+
+    // Ensure city exists
+    const result = await this.countryModel.find(query).select(projection).exec();
+    return result
   }
 }

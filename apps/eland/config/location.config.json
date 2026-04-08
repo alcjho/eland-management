@@ -1,0 +1,10 @@
+[
+    {"cmd": "city.create", "path":"location/city", "service": "LOCATION_SERVICE", "type": "tcp", "method": "POST"},
+    {"cmd": "location.get", "path":"location/:id", "service": "LOCATION_SERVICE", "type": "tcp", "method": "GET"},
+    {"cmd": "location.batch.get", "path":"location/batch/:offset/:limit", "service": "LOCATION_SERVICE", "type": "tcp", "method": "POST"},
+    {"cmd": "location.create", "path":"location", "service": "LOCATION_SERVICE", "type": "tcp", "method": "POST"},
+    {"cmd": "location.update", "path":"location", "service": "LOCATION_SERVICE", "type": "tcp", "method": "PUT"},
+    {"cmd": "cities.get", "path":"location/cities/:lg", "service": "LOCATION_SERVICE", "type": "tcp", "method": "GET"},
+    {"cmd": "provinces.get", "path":"location/provinces/:lg", "service": "LOCATION_SERVICE", "type": "tcp", "method": "GET"},
+    {"cmd": "countries.get", "path":"location/countries/:lg", "service": "LOCATION_SERVICE", "type": "tcp", "method": "GET"}
+]

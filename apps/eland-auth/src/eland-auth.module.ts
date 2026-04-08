@@ -1,16 +1,20 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { JwtModule } from '@nestjs/jwt';
-import { MongooseModule } from '@nestjs/mongoose';
 import { ElandAuthController } from './eland-auth.controller';
 import { ElandAuthService } from './eland-auth.service';
-import { UserSchema } from './schemas/user.schema';
+import { User } from './entities/user.entity';
 import { ElandMailModule } from '@eland/eland-library/eland-mail.module';
-import { RoleSchema } from './schemas/role.schema';
+import { Role } from './entities/role.entity';
 import { DatabaseModule } from './database.module';
 import { SeederService } from './seeds/seeder.service';
 import { getEnvPath } from './utilities';
-
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { Tenant } from './entities/tenant.entity';
+import { Manager } from './entities/manager.entity';
+import { Owner } from './entities/owner.entity';
+import { PassportModule } from '@nestjs/passport';
+import { JwtStrategy } from './strategies/jwt.strategy';
 
 @Module({
   imports: [
@@ -18,10 +22,14 @@ import { getEnvPath } from './utilities';
     ConfigModule.forRoot({
       envFilePath: [ getEnvPath("eland-auth"), getEnvPath() ]
     }),
-    MongooseModule.forFeature([
-      { name: 'User', schema: UserSchema },
-      { name: 'Role', schema: RoleSchema}
+    TypeOrmModule.forFeature([
+      User,
+      Role,
+      Manager,
+      Owner,
+      Tenant
     ]),
+    PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
@@ -35,6 +43,6 @@ import { getEnvPath } from './utilities';
     ElandMailModule,
   ],
   controllers: [ElandAuthController],
-  providers: [SeederService, ElandAuthService],
+  providers: [SeederService, ElandAuthService, JwtStrategy],
 })
 export class ElandAuthModule {}

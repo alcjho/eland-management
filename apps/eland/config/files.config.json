@@ -1,0 +1,58 @@
+[
+    {
+        "cmd": "property/document/upload", 
+        "service": "FILE_STREAM_SERVICE", 
+        "type": "stream",
+        "method": "POST",
+        "root": "http://localhost:3001",
+        "isStream": true,
+        "path": "/property/document/upload/:fileId"
+    },
+    {
+        "cmd": "property/document/download", 
+        "service": "FILE_STREAM_SERVICE", 
+        "type": "http",
+        "method": "GET",
+        "root": "http://localhost:3001",
+        "path": "/property/document/download/:fileId"
+    },
+    {
+        "cmd": "property/media/upload", 
+        "service": "FILE_STREAM_SERVICE", 
+        "type": "stream",
+        "method": "POST",
+        "root": "http://localhost:3001",
+        "path": "/property/media/upload/:fileId"
+    },
+    {
+        "cmd": "property/media/download", 
+        "service": "FILE_STREAM_SERVICE", 
+        "type": "http",
+        "method": "GET",
+        "root": "http://localhost:3001",
+        "path": "/property/media/download/:fileId"
+    },
+    {
+        "cmd": "property/media/batch-by-entity", 
+        "service": "FILE_STREAM_SERVICE", 
+        "type": "http",
+        "method": "POST",
+        "root": "http://localhost:3001",
+        "path": "/property/media/batch-by-entity"
+    },
+    {
+        "cmd": "public-asset", 
+        "service": "FILE_STREAM_SERVICE", 
+        "type": "stream",
+        "method": "POST",
+        "path": "public-asset/media/upload/:fileId"
+    },
+    {
+        "cmd": "public-asset/media/download", 
+        "service": "FILE_STREAM_SERVICE", 
+        "type": "stream",
+        "method": "POST",
+        "isStream": true,
+        "path": "public-asset/media/download"
+    }
+]
